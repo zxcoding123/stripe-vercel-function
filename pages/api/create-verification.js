@@ -33,7 +33,7 @@ export default async function handler(req, res) {
     const verificationSession = await stripe.identity.verificationSessions.create({
       type: "document",
       metadata: { customer_email: checkoutSession.customer_email },
-      return_url: "http://localhost:3000/verification-success",
+      return_url: "https://stripe-vercel-function.vercel.app//verification-success",
     });
 
     // 3. Return verification link

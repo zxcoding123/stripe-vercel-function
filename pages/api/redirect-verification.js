@@ -21,7 +21,7 @@ export default async function handler(req, res) {
       type: "document",
       customer: checkoutSession.customer || undefined,
       metadata: checkoutSession.customer_email ? { email: checkoutSession.customer_email } : undefined,
-      return_url: `http://localhost:3000/verification-complete?verification_session=${verificationSession.id}`
+      return_url: `https://stripe-vercel-function.vercel.app/verification-complete?verification_session=${verificationSession.id}`
     });
 
 
