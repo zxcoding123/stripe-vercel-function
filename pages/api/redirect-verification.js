@@ -23,8 +23,10 @@ export default async function handler(req, res) {
           checkoutSession.customer_details?.email,
         product: product_name,
       },
-      // Stripe will automatically append ?verification_session=vs_1234
-      return_url: `https://stripe-vercel-function.vercel.app/verification-complete?product=${encodeURIComponent(product_name)}`,
+      // Stripe will automatically replace {VERIFICATION_SESSION_ID} with vs_1234...
+      return_url: `https://stripe-vercel-function.vercel.app/verification-complete?product=${encodeURIComponent(
+        product_name
+      )}&verification_session={VERIFICATION_SESSION_ID}`,
     });
 
     // 3. Send confirmation email via Resend
@@ -49,7 +51,7 @@ export default async function handler(req, res) {
       });
     }
 
-    // 4. Redirect to Stripe Identity Verification
+    // 4. Redirect user directly to Stripe Identity Verification
     res.writeHead(302, { Location: verificationSession.url });
     res.end();
   } catch (err) {
