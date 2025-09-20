@@ -1,10 +1,10 @@
 import Stripe from "stripe";
 import { Resend } from "resend";
 
-if (process.env.NODE_ENV !== "production") {
-  const dotenv = await import("dotenv");
-  dotenv.config();
-}
+// if (process.env.NODE_ENV !== "production") {
+//   const dotenv = await import("dotenv");
+//   dotenv.config();
+// }
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 const resend = new Resend(process.env.RESEND_API_KEY);
