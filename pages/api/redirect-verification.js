@@ -18,7 +18,7 @@ export default async function handler(req, res) {
     // 2. Create the verification session
     const verificationSession = await stripe.identity.verificationSessions.create({
       type: "document",
-      customer: checkoutSession.customer || undefined,
+
       metadata: {
         email: checkoutSession.customer_email || checkoutSession.customer_details?.email,
         product: product_name,
