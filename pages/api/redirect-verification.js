@@ -13,8 +13,8 @@ export default async function handler(req, res) {
     // 1. Retrieve the checkout session
     const checkoutSession = await stripe.checkout.sessions.retrieve(session_id);
 
-    // 2a. Create verification session without return_url
-    let verificationSession = await stripe.identity.verificationSessions.create({
+    // 2. Create verification session WITH return_url
+    const verificationSession = await stripe.identity.verificationSessions.create({
       type: "document",
       customer: checkoutSession.customer || undefined,
       metadata: {
@@ -23,22 +23,14 @@ export default async function handler(req, res) {
           checkoutSession.customer_details?.email,
         product: product_name,
       },
+      // Stripe will automatically append ?verification_session=vs_1234
+      return_url: `https://stripe-vercel-function.vercel.app/verification-complete?product=${encodeURIComponent(product_name)}`,
     });
-
-    // 2b. Update verification session with return_url (now we have the ID)
-    verificationSession = await stripe.identity.verificationSessions.update(
-      verificationSession.id,
-      {
-        return_url: `https://stripe-vercel-function.vercel.app/verification-complete?verification_session=${encodeURIComponent(
-          verificationSession.id
-        )}&product=${encodeURIComponent(product_name)}`,
-      }
-    );
 
     // 3. Send confirmation email via Resend
     if (checkoutSession.customer_details?.email) {
       await resend.emails.send({
-        from: "no-reply@gettaxreliefnow.com", // your verified sender in Resend
+        from: "no-reply@gettaxreliefnow.com", // must be verified in Resend
         to: checkoutSession.customer_details.email,
         subject: `Your Purchase Confirmation: ${product_name}`,
         html: `

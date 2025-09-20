@@ -2,71 +2,44 @@ import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/router";
 import Image from "next/image";
 
-/*
-  VerificationComplete
-  - Shows the logo always at the top
-  - Checks verification session status via /api/check-verification
-  - Displays loading / success / pending / error cards using the GTR color palette
-  - When verified: shows a countdown (5..4..3..) and redirects to target URL
-  - Uses AbortController to cancel the fetch if the component unmounts
-  - Cleans up timers to avoid leaks
-*/
 export default function VerificationComplete() {
   const router = useRouter();
+  const [status, setStatus] = useState("loading");
+  const [message, setMessage] = useState("");
+  const [countdown, setCountdown] = useState(null);
 
-  // --- UI / flow state ---
-  const [status, setStatus] = useState("loading"); // "loading" | "success" | "pending" | "error"
-  const [message, setMessage] = useState(""); // descriptive message to show in the card
-  const [countdown, setCountdown] = useState(null); // number of seconds left for redirect (null = no redirect active)
-
-  // refs for cleaning timeouts/intervals and fetch aborting
   const redirectTimerRef = useRef(null);
   const fetchControllerRef = useRef(null);
 
   useEffect(() => {
-    // 1) Load Google font dynamically (Playfair Display)
-    const link = document.createElement("link");
-    link.href =
-      "https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&display=swap";
-    link.rel = "stylesheet";
-    document.head.appendChild(link);
-
-    // 2) Function to check verification status from backend
     const checkVerificationStatus = async () => {
-      // verification_session is expected as a query param in the URL
-      const { verification_session } = router.query;
+      const { verification_session, product } = router.query;
 
       if (!verification_session) {
-        // If not present, immediately show an error state
         setStatus("error");
         setMessage("No verification session found in the URL.");
         return;
       }
 
-      // Create an AbortController so we can cancel the fetch if user navigates away
       const controller = new AbortController();
       fetchControllerRef.current = controller;
 
       try {
-        // Call your server-side endpoint (server should securely call Stripe)
         const response = await fetch(
-          `/api/check-verification?session_id=${encodeURIComponent(
+          `/api/check-verification?verification_session=${encodeURIComponent(
             verification_session
           )}`,
           { signal: controller.signal }
         );
-
-        // If the endpoint returns non-JSON or an error, this may throw; handle gracefully
         const data = await response.json();
 
-        // Handle the verification result statuses from your server
-        // inside success block in verification-complete.js
         if (data.status === "verified") {
           setStatus("success");
           setMessage("Your identity has been successfully verified!");
 
-          // New redirect target
-          const redirectUrl = `/form-instructions?product=${encodeURIComponent("IRS ACCOUNT TRANSCRIPT")}`;
+          const redirectUrl = `/form-instructions?product=${encodeURIComponent(
+            product || ""
+          )}`;
 
           setCountdown(5);
           redirectTimerRef.current = setInterval(() => {
@@ -75,63 +48,52 @@ export default function VerificationComplete() {
               if (prev <= 1) {
                 clearInterval(redirectTimerRef.current);
                 redirectTimerRef.current = null;
-                window.location.href = redirectUrl; // redirect to new page
+                window.location.href = redirectUrl;
                 return 0;
               }
               return prev - 1;
             });
           }, 1000);
-        }
-        else if (data.status === "requires_input") {
-          // Example: identity needs more documents from user
+        } else if (data.status === "requires_input") {
           setStatus("pending");
           setMessage(
             "Additional information required. Please check your email for instructions."
           );
         } else if (data.status === "processing") {
-          // Example: still being reviewed
           setStatus("pending");
           setMessage("Your verification is being processed...");
         } else if (data.status === "canceled") {
           setStatus("error");
           setMessage("Verification was canceled.");
         } else {
-          // catch-all for unrecognized statuses
           setStatus("pending");
           setMessage(`Status: ${String(data.status)}`);
         }
       } catch (err) {
-        // Distinguish between AbortError (ignored) and other errors (show to user)
-        if (err.name === "AbortError") {
-          // fetch was aborted (component unmounted or effect cleaned up) – no UI change needed
-          return;
+        if (err.name !== "AbortError") {
+          console.error("Verification check failed:", err);
+          setStatus("error");
+          setMessage("Error checking verification status. Please try again later.");
         }
-        console.error("Verification check failed:", err);
-        setStatus("error");
-        setMessage("Error checking verification status. Please try again later.");
       }
     };
 
-    // Wait for Next.js router to be ready so router.query exists
     if (router.isReady) {
       checkVerificationStatus();
     }
 
-    // Cleanup on unmount or when dependencies change:
     return () => {
-      // Abort the in-flight fetch if any
       if (fetchControllerRef.current) {
         fetchControllerRef.current.abort();
         fetchControllerRef.current = null;
       }
-      // Clear redirect timer/interval if active
       if (redirectTimerRef.current) {
         clearInterval(redirectTimerRef.current);
         redirectTimerRef.current = null;
       }
-      // Optionally remove the injected font link (omitted here — fonts are fine to leave)
     };
   }, [router.isReady, router.query]);
+
 
   // Reusable card style (white card) — colors applied per status where needed
   const cardStyle = {
