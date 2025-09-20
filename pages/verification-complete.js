@@ -9,6 +9,7 @@ export default function VerificationComplete() {
   const [countdown, setCountdown] = useState(null);
 
   const redirectTimerRef = useRef(null);
+  const pollTimerRef = useRef(null);
   const fetchControllerRef = useRef(null);
 
   useEffect(() => {
@@ -18,69 +19,83 @@ export default function VerificationComplete() {
 
       try {
         const response = await fetch('/api/check-verification', {
-          credentials: 'include', // Important: include cookies
-          signal: controller.signal
+          credentials: 'include',
+          signal: controller.signal,
         });
-        
+
         if (response.status === 400) {
           const errorData = await response.json();
           setStatus("error");
           setMessage(errorData.error || "Session expired or not found. Please start over.");
           return;
         }
-        
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
+
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+
         const data = await response.json();
+        console.log("API Response:", data);
 
-        if (data.status === "verified") {
-          setStatus("success");
-          setMessage("Your identity has been successfully verified!");
+        switch (data.status) {
+          case "verified":
+            setStatus("success");
+            setMessage("Your identity has been successfully verified!");
+            const redirectUrl = `/form-instructions?product=${encodeURIComponent(data.product || "")}`;
+            setCountdown(5);
+            redirectTimerRef.current = setInterval(() => {
+              setCountdown((prev) => {
+                if (prev === null) return null;
+                if (prev <= 1) {
+                  clearInterval(redirectTimerRef.current);
+                  redirectTimerRef.current = null;
+                  window.location.href = redirectUrl;
+                  return 0;
+                }
+                return prev - 1;
+              });
+            }, 1000);
+            // Stop polling once verified
+            if (pollTimerRef.current) clearInterval(pollTimerRef.current);
+            break;
 
-          const redirectUrl = `/form-instructions?product=${encodeURIComponent(data.product || "")}`;
+          case "requires_input":
+            setStatus("pending");
+            setMessage("Additional information required. Please check your email.");
+            if (pollTimerRef.current) clearInterval(pollTimerRef.current);
+            break;
 
-          setCountdown(5);
-          redirectTimerRef.current = setInterval(() => {
-            setCountdown((prev) => {
-              if (prev === null) return null;
-              if (prev <= 1) {
-                clearInterval(redirectTimerRef.current);
-                redirectTimerRef.current = null;
-                window.location.href = redirectUrl;
-                return 0;
-              }
-              return prev - 1;
-            });
-          }, 1000);
-        } else if (data.status === "requires_input") {
-          setStatus("pending");
-          setMessage("Additional information required. Please check your email.");
-        } else if (data.status === "processing") {
-          setStatus("pending");
-          setMessage("Your verification is being processed...");
-        } else if (data.status === "canceled") {
-          setStatus("error");
-          setMessage("Verification was canceled.");
-        } else {
-          setStatus("pending");
-          setMessage(`Status: ${String(data.status)}`);
+          case "processing":
+            setStatus("pending");
+            setMessage("Your verification is being processed...");
+            break;
+
+          case "canceled":
+            setStatus("error");
+            setMessage("Verification was canceled.");
+            if (pollTimerRef.current) clearInterval(pollTimerRef.current);
+            break;
+
+          default:
+            setStatus("pending");
+            setMessage(`Status: ${String(data.status)}`);
         }
       } catch (err) {
         if (err.name !== "AbortError") {
           console.error("Verification check failed:", err);
           setStatus("error");
           setMessage("Error checking verification status. Please try again later.");
+          if (pollTimerRef.current) clearInterval(pollTimerRef.current);
         }
       }
     };
 
+    // Start polling every 3 seconds
     checkVerificationStatus();
+    pollTimerRef.current = setInterval(checkVerificationStatus, 3000);
 
     return () => {
       if (fetchControllerRef.current) fetchControllerRef.current.abort();
       if (redirectTimerRef.current) clearInterval(redirectTimerRef.current);
+      if (pollTimerRef.current) clearInterval(pollTimerRef.current);
     };
   }, []);
 
@@ -93,7 +108,6 @@ export default function VerificationComplete() {
   };
 
   const handleRestart = () => {
-    // Clear the session cookie by setting an expired cookie
     document.cookie = "verification_session=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
     window.location.href = "/verification-start";
   };
@@ -115,6 +129,7 @@ export default function VerificationComplete() {
       <h1 style={{ color: "#ddc946", marginBottom: "1.5rem" }}>Verification Status</h1>
 
       {status === "loading" && <p>Checking verification status...</p>}
+
       {status === "success" && (
         <div style={{ ...cardStyle, border: "2px solid #0f2c76", color: "#0f2c76", maxWidth: "500px" }}>
           <h3>✅ Success!</h3>
@@ -124,12 +139,14 @@ export default function VerificationComplete() {
           </p>}
         </div>
       )}
+
       {status === "pending" && (
         <div style={{ ...cardStyle, border: "2px solid #ddc946", color: "#ddc946", maxWidth: "500px" }}>
           <h3>⏳ Processing</h3>
           <p>{message}</p>
         </div>
       )}
+
       {status === "error" && (
         <div style={{ ...cardStyle, border: "2px solid red", color: "red", maxWidth: "500px" }}>
           <h3>❌ Error</h3>
@@ -159,7 +176,9 @@ export default function VerificationComplete() {
           color: "#0f2c76",
           fontWeight: "bold",
           transition: "all 0.3s ease",
-        }}>Return to Home</button>
+        }}>
+          Return to Home
+        </button>
       </div>
     </div>
   );
