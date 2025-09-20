@@ -1,24 +1,29 @@
-// /pages/api/check-verification.js
-import Stripe from 'stripe';
+import Stripe from "stripe";
 
-// Initialize Stripe with your secret key
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 export default async function handler(req, res) {
-  const { session_id } = req.query;
-
-  if (!session_id) {
-    return res.status(400).json({ error: 'Missing session_id parameter' });
-  }
-
   try {
-    // Retrieve the Stripe Identity Verification Session
-    const verificationSession = await stripe.identity.verificationSessions.retrieve(session_id);
+    const { verification_session } = req.query;
+    if (!verification_session) {
+      return res.status(400).json({ error: "Missing verification_session" });
+    }
 
-    // Return only the status
-    res.status(200).json({ status: verificationSession.status });
-  } catch (error) {
-    console.error('Error retrieving verification session:', error);
-    res.status(500).json({ error: error.message });
+    // 1. Retrieve the verification session from Stripe
+    const session = await stripe.identity.verificationSessions.retrieve(
+      verification_session
+    );
+
+    // 2. Respond with details (status + metadata)
+    res.status(200).json({
+      id: session.id,
+      status: session.status,
+      verified: session.status === "verified",
+      product: session.metadata?.product,
+      email: session.metadata?.email,
+    });
+  } catch (err) {
+    console.error("check-verification error:", err);
+    res.status(500).json({ error: err.message });
   }
 }

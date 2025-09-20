@@ -13,7 +13,7 @@ export default async function handler(req, res) {
     // 1. Retrieve the checkout session
     const checkoutSession = await stripe.checkout.sessions.retrieve(session_id);
 
-    // 2. Create verification session WITH return_url
+    // 2. Create verification session (no {VERIFICATION_SESSION_ID})
     const verificationSession = await stripe.identity.verificationSessions.create({
       type: "document",
       customer: checkoutSession.customer || undefined,
@@ -23,10 +23,10 @@ export default async function handler(req, res) {
           checkoutSession.customer_details?.email,
         product: product_name,
       },
-      // Stripe will automatically replace {VERIFICATION_SESSION_ID} with vs_1234...
+      // Stripe will automatically append ?verification_session=vs_1234
       return_url: `https://stripe-vercel-function.vercel.app/verification-complete?product=${encodeURIComponent(
         product_name
-      )}&verification_session={VERIFICATION_SESSION_ID}`,
+      )}`,
     });
 
     // 3. Send confirmation email via Resend
@@ -39,7 +39,9 @@ export default async function handler(req, res) {
           <h2>Thank you for your purchase!</h2>
           <p>Here’s a summary of your transaction:</p>
           <ul>
-            <li><strong>Amount:</strong> ${(checkoutSession.amount_total / 100).toFixed(2)} ${checkoutSession.currency.toUpperCase()}</li>
+            <li><strong>Amount:</strong> ${(checkoutSession.amount_total / 100).toFixed(
+              2
+            )} ${checkoutSession.currency.toUpperCase()}</li>
             <li><strong>Product:</strong> ${product_name}</li>
           </ul>
           <p><strong>Refund Details:</strong> Refunds are subject to our policy and can be requested within 7 days.</p>
@@ -51,7 +53,7 @@ export default async function handler(req, res) {
       });
     }
 
-    // 4. Redirect user directly to Stripe Identity Verification
+    // 4. Redirect to Stripe Identity Verification
     res.writeHead(302, { Location: verificationSession.url });
     res.end();
   } catch (err) {

@@ -4,7 +4,7 @@ import Image from "next/image";
 
 export default function VerificationComplete() {
   const router = useRouter();
-  const [status, setStatus] = useState("loading");
+  const [status, setStatus] = useState("loading"); // "loading" | "success" | "pending" | "error"
   const [message, setMessage] = useState("");
   const [countdown, setCountdown] = useState(null);
 
@@ -38,7 +38,7 @@ export default function VerificationComplete() {
           setMessage("Your identity has been successfully verified!");
 
           const redirectUrl = `/form-instructions?product=${encodeURIComponent(
-            product || ""
+            product || data.product || ""
           )}`;
 
           setCountdown(5);
@@ -73,7 +73,9 @@ export default function VerificationComplete() {
         if (err.name !== "AbortError") {
           console.error("Verification check failed:", err);
           setStatus("error");
-          setMessage("Error checking verification status. Please try again later.");
+          setMessage(
+            "Error checking verification status. Please try again later."
+          );
         }
       }
     };
@@ -94,8 +96,6 @@ export default function VerificationComplete() {
     };
   }, [router.isReady, router.query]);
 
-
-  // Reusable card style (white card) — colors applied per status where needed
   const cardStyle = {
     padding: "1.5rem",
     borderRadius: "12px",
@@ -104,45 +104,41 @@ export default function VerificationComplete() {
     boxShadow: "0 4px 10px rgba(0,0,0,0.1)",
   };
 
-  // ---------- JSX ----------
   return (
     <div
       style={{
         minHeight: "100vh",
         display: "flex",
         flexDirection: "column",
-        justifyContent: "center", // content vertically centered
+        justifyContent: "center",
         alignItems: "center",
-        backgroundColor: "#0f2c76", // deep blue background
+        backgroundColor: "#0f2c76",
         color: "#ffffff",
         fontFamily: "'Playfair Display', serif",
         textAlign: "center",
         padding: "2rem",
       }}
     >
-      {/* Logo: always shown at the top of the page.
-          Put a file named /public/gtr_logo.png in your Next.js project.
-          next/image optimizes delivery automatically in supported environments. */}
       <Image
         src="/gtr_logo.png"
         alt="GetTaxRelief Logo"
         width={150}
         height={50}
         style={{ marginBottom: "2rem" }}
-        priority // optional: hint to preload the image for fastest display
+        priority
       />
 
-      <h1 style={{ color: "#ddc946", marginBottom: "1.5rem" }}>Verification Status</h1>
+      <h1 style={{ color: "#ddc946", marginBottom: "1.5rem" }}>
+        Verification Status
+      </h1>
 
-      {/* Loading */}
       {status === "loading" && <p>Checking verification status...</p>}
 
-      {/* Success */}
       {status === "success" && (
         <div
           style={{
             ...cardStyle,
-            border: "2px solid #0f2c76", // blue border on success card
+            border: "2px solid #0f2c76",
             color: "#0f2c76",
             maxWidth: "500px",
           }}
@@ -151,8 +147,6 @@ export default function VerificationComplete() {
         >
           <h3>✅ Success!</h3>
           <p>{message}</p>
-
-          {/* Show the active countdown if set */}
           {typeof countdown === "number" && (
             <p style={{ marginTop: "1rem", fontSize: "0.95rem", color: "#666" }}>
               Redirecting you in {countdown} second{countdown === 1 ? "" : "s"}...
@@ -161,7 +155,6 @@ export default function VerificationComplete() {
         </div>
       )}
 
-      {/* Pending / requires input / processing */}
       {status === "pending" && (
         <div
           style={{
@@ -178,7 +171,6 @@ export default function VerificationComplete() {
         </div>
       )}
 
-      {/* Error */}
       {status === "error" && (
         <div
           style={{
@@ -195,7 +187,6 @@ export default function VerificationComplete() {
         </div>
       )}
 
-      {/* Return button */}
       <div style={{ marginTop: "2rem" }}>
         <button
           onClick={() => (window.location.href = "https://www.gettaxreliefnow.com")}
