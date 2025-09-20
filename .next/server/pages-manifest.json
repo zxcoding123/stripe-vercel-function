@@ -1,7 +1,1 @@
-{
-  "/_app": "pages/_app.js",
-  "/_error": "pages/_error.js",
-  "/_document": "pages/_document.js",
-  "/": "pages/index.js",
-  "/verification-complete": "pages/verification-complete.js"
-}
+{"/_app":"pages/_app.js","/_error":"pages/_error.js","/api/check-verification":"pages/api/check-verification.js","/api/create-verification":"pages/api/create-verification.js","/form-instructions":"pages/form-instructions.html","/api/get-session":"pages/api/get-session.js","/api/test":"pages/api/test.js","/api/redirect-verification":"pages/api/redirect-verification.js","/test":"pages/test.html","/verification-complete":"pages/verification-complete.html","/":"pages/index.html","/_document":"pages/_document.js","/404":"pages/404.html"}

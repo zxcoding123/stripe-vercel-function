@@ -1,0 +1,13 @@
+"use strict";(()=>{var e={};e.id=982,e.ids=[982],e.modules={145:e=>{e.exports=require("next/dist/compiled/next-server/pages-api.runtime.prod.js")},6326:e=>{e.exports=import("resend")},6090:e=>{e.exports=import("stripe")},8:(e,t,r)=>{r.a(e,async(e,i)=>{try{r.r(t),r.d(t,{config:()=>d,default:()=>u,routeModule:()=>l});var a=r(1802),o=r(7153),n=r(6249),s=r(3155),c=e([s]);s=(c.then?(await c)():c)[0];let u=(0,n.l)(s,"default"),d=(0,n.l)(s,"config"),l=new a.PagesAPIRouteModule({definition:{kind:o.x.PAGES_API,page:"/api/redirect-verification",pathname:"/api/redirect-verification",bundlePath:"",filename:""},userland:s});i()}catch(e){i(e)}})},3155:(e,t,r)=>{r.a(e,async(e,i)=>{try{r.r(t),r.d(t,{default:()=>handler});var a=r(6090),o=r(6326),n=e([a,o]);[a,o]=n.then?(await n)():n;let s=new a.default(process.env.STRIPE_SECRET_KEY),c=new o.Resend(process.env.RESEND_API_KEY);async function handler(e,t){try{let{session_id:r,product_name:i}=e.query;if(!r)return t.status(400).send("Missing session_id");if(!i)return t.status(400).send("Missing product_name");let a=await s.checkout.sessions.retrieve(r),o=await s.identity.verificationSessions.create({type:"document",customer:a.customer||void 0,metadata:{email:a.customer_email||a.customer_details?.email,product:i},return_url:`https://stripe-vercel-function.vercel.app/verification-complete?verification_session={VERIFICATION_SESSION_ID}&product=${encodeURIComponent(i)}`});a.customer_details?.email&&await c.emails.send({from:"no-reply@gettaxreliefnow.com",to:a.customer_details.email,subject:`Your Purchase Confirmation: ${i}`,html:`
+          <h2>Thank you for your purchase!</h2>
+          <p>Here’s a summary of your transaction:</p>
+          <ul>
+            <li><strong>Amount:</strong> ${(a.amount_total/100).toFixed(2)} ${a.currency.toUpperCase()}</li>
+            <li><strong>Product:</strong> ${i}</li>
+          </ul>
+          <p><strong>Refund Details:</strong> Refunds are subject to our policy and can be requested within 7 days.</p>
+          <p>Next Step: Please complete your identity verification by clicking the button below:</p>
+          <a href="${o.url}" style="display:inline-block;padding:10px 20px;background:#635bff;color:white;text-decoration:none;border-radius:5px;">
+            Start Identity Verification
+          </a>
+        `}),t.writeHead(302,{Location:o.url}),t.end()}catch(e){console.error("redirect-verification error:",e),t.status(500).json({error:e.message})}}i()}catch(e){i(e)}})}};var t=require("../../webpack-api-runtime.js");t.C(e);var __webpack_exec__=e=>t(t.s=e),r=t.X(0,[222],()=>__webpack_exec__(8));module.exports=r})();

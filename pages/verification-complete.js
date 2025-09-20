@@ -60,30 +60,29 @@ export default function VerificationComplete() {
         const data = await response.json();
 
         // Handle the verification result statuses from your server
+        // inside success block in verification-complete.js
         if (data.status === "verified") {
           setStatus("success");
           setMessage("Your identity has been successfully verified!");
 
-          // Start a visible countdown (5 seconds) and redirect when it hits 0.
-          // Using setInterval + functional state update to avoid stale closures.
-          const redirectUrl = "https://www.gettaxreliefnow.com/";
-          setCountdown(5); // UI shows 5 -> 4 -> 3 -> 2 -> 1 -> 0
+          // New redirect target
+          const redirectUrl = `/form-instructions?product=${encodeURIComponent("IRS ACCOUNT TRANSCRIPT")}`;
 
+          setCountdown(5);
           redirectTimerRef.current = setInterval(() => {
             setCountdown((prev) => {
               if (prev === null) return null;
               if (prev <= 1) {
-                // final step: clear interval and redirect
                 clearInterval(redirectTimerRef.current);
                 redirectTimerRef.current = null;
-                // perform redirect
-                window.location.href = redirectUrl;
+                window.location.href = redirectUrl; // redirect to new page
                 return 0;
               }
               return prev - 1;
             });
           }, 1000);
-        } else if (data.status === "requires_input") {
+        }
+        else if (data.status === "requires_input") {
           // Example: identity needs more documents from user
           setStatus("pending");
           setMessage(
