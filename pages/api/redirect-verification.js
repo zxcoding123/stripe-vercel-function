@@ -43,7 +43,7 @@ export default async function handler(req, res) {
     // 5. Send confirmation email via Resend
     if (checkoutSession.customer_details?.email) {
       await resend.emails.send({
-        from: "no-reply@gettaxreliefnow.com",
+        from: "Get Tax Relief Now <donotreply@updates.gettaxreliefnow.com>",
         to: checkoutSession.customer_details.email,
         subject: `Your Purchase Confirmation: ${product_name}`,
         html: `

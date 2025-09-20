@@ -3,7 +3,7 @@ import { useRouter } from "next/router";
 
 export default function FormInstructions() {
   const router = useRouter();
-  const { product } = router.query; // product from URL if passed
+  const { product } = router.query;
 
   return (
     <div
@@ -12,7 +12,8 @@ export default function FormInstructions() {
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
-        backgroundColor: "#f9fafb",
+        justifyContent: "center",
+        background: "linear-gradient(135deg, #f9fafb 0%, #e0e7ff 100%)",
         padding: "2rem",
         fontFamily: "'Playfair Display', serif",
         color: "#0f2c76",
@@ -22,74 +23,98 @@ export default function FormInstructions() {
       <Image
         src="/gtr_logo.png"
         alt="GetTaxRelief Logo"
-        width={150}
-        height={50}
+        width={180}
+        height={60}
         style={{ marginBottom: "2rem" }}
       />
 
-      <h1 style={{ color: "#ddc946" }}>
+      <h1
+        style={{
+          color: "#ddc946",
+          fontSize: "2.5rem",
+          textAlign: "center",
+          marginBottom: "1.5rem",
+        }}
+      >
         {product ? `${product} Instructions` : "Form Instructions"}
       </h1>
 
       <div
         style={{
-          maxWidth: "600px",
+          maxWidth: "700px",
+          width: "100%",
           background: "#fff",
-          padding: "2rem",
-          borderRadius: "12px",
-          boxShadow: "0 4px 10px rgba(0,0,0,0.1)",
-          marginTop: "1.5rem",
+          padding: "2.5rem",
+          borderRadius: "16px",
+          boxShadow: "0 10px 25px rgba(0,0,0,0.1)",
         }}
       >
-        <h2>📄 Step 1: Download the Form</h2>
-        <p>
-          Please download the official IRS Form 8821 using the link below:
-        </p>
-        <a
-          href="https://www.cdn.gettaxreliefnow.com/form_8821.pdf"
-          target="_blank"
-          rel="noopener noreferrer"
-          style={{
-            display: "inline-block",
-            marginTop: "0.5rem",
-            padding: "0.75rem 1.5rem",
-            background: "#0f2c76",
-            color: "#fff",
-            borderRadius: "8px",
-            textDecoration: "none",
-          }}
-        >
-          📥 Download Form 8821
-        </a>
+        {/* Step 1 */}
+        <div style={{ marginBottom: "2rem" }}>
+          <h2 style={{ display: "flex", alignItems: "center", fontSize: "1.5rem", marginBottom: "0.5rem" }}>
+            📄 Step 1: Download the Form
+          </h2>
+          <p>Please download the official IRS Form 8821 using the link below:</p>
+          <a
+            href="https://www.cdn.gettaxreliefnow.com/form_8821.pdf"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              display: "inline-block",
+              marginTop: "0.5rem",
+              padding: "0.75rem 1.5rem",
+              background: "#0f2c76",
+              color: "#fff",
+              borderRadius: "8px",
+              textDecoration: "none",
+              fontWeight: "600",
+              transition: "all 0.3s ease",
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.background = "#0b1a4a")}
+            onMouseLeave={(e) => (e.currentTarget.style.background = "#0f2c76")}
+          >
+            📥 Download Form 8821
+          </a>
+        </div>
 
-        <h2 style={{ marginTop: "1.5rem" }}>🖊️ Step 2: Sign the Form</h2>
-        <p>
-          Carefully fill out and sign the form. Ensure all information is{" "}
-          <b>accurate and complete</b>. Inaccurate forms may delay processing.
-        </p>
+        {/* Step 2 */}
+        <div style={{ marginBottom: "2rem" }}>
+          <h2 style={{ display: "flex", alignItems: "center", fontSize: "1.5rem", marginBottom: "0.5rem" }}>
+            🖊️ Step 2: Sign the Form
+          </h2>
+          <p>
+            Carefully fill out and sign the form. Ensure all information is{" "}
+            <b>accurate and complete</b>. Inaccurate forms may delay processing.
+          </p>
+        </div>
 
-        <h2 style={{ marginTop: "1.5rem" }}>📤 Step 3: Submit via TaxDome</h2>
-        <p>
-          Once signed, please submit the form securely through our TaxDome
-          portal:
-        </p>
-        <a
-          href="https://app.taxdome.com/gettaxrelief"
-          target="_blank"
-          rel="noopener noreferrer"
-          style={{
-            display: "inline-block",
-            marginTop: "0.5rem",
-            padding: "0.75rem 1.5rem",
-            background: "#ddc946",
-            color: "#0f2c76",
-            borderRadius: "8px",
-            textDecoration: "none",
-            fontWeight: "bold",
-          }}
-        >
-          🚀 Submit on TaxDome
-        </a>
+        {/* Step 3 */}
+        <div>
+          <h2 style={{ display: "flex", alignItems: "center", fontSize: "1.5rem", marginBottom: "0.5rem" }}>
+            📤 Step 3: Submit via TaxDome
+          </h2>
+          <p>Once signed, please submit the form securely through our TaxDome portal:</p>
+          <a
+            href="https://app.taxdome.com/gettaxrelief"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              display: "inline-block",
+              marginTop: "0.5rem",
+              padding: "0.75rem 1.5rem",
+              background: "#ddc946",
+              color: "#0f2c76",
+              borderRadius: "8px",
+              textDecoration: "none",
+              fontWeight: "bold",
+              transition: "all 0.3s ease",
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.background = "#c0b23f")}
+            onMouseLeave={(e) => (e.currentTarget.style.background = "#ddc946")}
+          >
+            🚀 Submit on TaxDome
+          </a>
+        </div>
       </div>
     </div>
   );
