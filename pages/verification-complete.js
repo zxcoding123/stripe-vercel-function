@@ -4,7 +4,7 @@ import Image from "next/image";
 
 export default function VerificationComplete() {
   const router = useRouter();
-  const [status, setStatus] = useState("loading"); // "loading" | "success" | "pending" | "error"
+  const [status, setStatus] = useState("loading");
   const [message, setMessage] = useState("");
   const [countdown, setCountdown] = useState(null);
 
@@ -56,9 +56,7 @@ export default function VerificationComplete() {
           }, 1000);
         } else if (data.status === "requires_input") {
           setStatus("pending");
-          setMessage(
-            "Additional information required. Please check your email for instructions."
-          );
+          setMessage("Additional information required. Please check your email.");
         } else if (data.status === "processing") {
           setStatus("pending");
           setMessage("Your verification is being processed...");
@@ -73,9 +71,7 @@ export default function VerificationComplete() {
         if (err.name !== "AbortError") {
           console.error("Verification check failed:", err);
           setStatus("error");
-          setMessage(
-            "Error checking verification status. Please try again later."
-          );
+          setMessage("Error checking verification status. Please try again later.");
         }
       }
     };
@@ -85,14 +81,8 @@ export default function VerificationComplete() {
     }
 
     return () => {
-      if (fetchControllerRef.current) {
-        fetchControllerRef.current.abort();
-        fetchControllerRef.current = null;
-      }
-      if (redirectTimerRef.current) {
-        clearInterval(redirectTimerRef.current);
-        redirectTimerRef.current = null;
-      }
+      if (fetchControllerRef.current) fetchControllerRef.current.abort();
+      if (redirectTimerRef.current) clearInterval(redirectTimerRef.current);
     };
   }, [router.isReady, router.query]);
 
@@ -105,113 +95,56 @@ export default function VerificationComplete() {
   };
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        display: "flex",
-        flexDirection: "column",
-        justifyContent: "center",
-        alignItems: "center",
-        backgroundColor: "#0f2c76",
-        color: "#ffffff",
-        fontFamily: "'Playfair Display', serif",
-        textAlign: "center",
-        padding: "2rem",
-      }}
-    >
-      <Image
-        src="/gtr_logo.png"
-        alt="GetTaxRelief Logo"
-        width={150}
-        height={50}
-        style={{ marginBottom: "2rem" }}
-        priority
-      />
-
-      <h1 style={{ color: "#ddc946", marginBottom: "1.5rem" }}>
-        Verification Status
-      </h1>
+    <div style={{
+      minHeight: "100vh",
+      display: "flex",
+      flexDirection: "column",
+      justifyContent: "center",
+      alignItems: "center",
+      backgroundColor: "#0f2c76",
+      color: "#ffffff",
+      fontFamily: "'Playfair Display', serif",
+      textAlign: "center",
+      padding: "2rem",
+    }}>
+      <Image src="/gtr_logo.png" alt="GetTaxRelief Logo" width={150} height={50} style={{ marginBottom: "2rem" }} priority />
+      <h1 style={{ color: "#ddc946", marginBottom: "1.5rem" }}>Verification Status</h1>
 
       {status === "loading" && <p>Checking verification status...</p>}
-
       {status === "success" && (
-        <div
-          style={{
-            ...cardStyle,
-            border: "2px solid #0f2c76",
-            color: "#0f2c76",
-            maxWidth: "500px",
-          }}
-          role="status"
-          aria-live="polite"
-        >
+        <div style={{ ...cardStyle, border: "2px solid #0f2c76", color: "#0f2c76", maxWidth: "500px" }}>
           <h3>✅ Success!</h3>
           <p>{message}</p>
-          {typeof countdown === "number" && (
-            <p style={{ marginTop: "1rem", fontSize: "0.95rem", color: "#666" }}>
-              Redirecting you in {countdown} second{countdown === 1 ? "" : "s"}...
-            </p>
-          )}
+          {typeof countdown === "number" && <p style={{ marginTop: "1rem", fontSize: "0.95rem", color: "#666" }}>
+            Redirecting you in {countdown} second{countdown === 1 ? "" : "s"}...
+          </p>}
         </div>
       )}
-
       {status === "pending" && (
-        <div
-          style={{
-            ...cardStyle,
-            border: "2px solid #ddc946",
-            color: "#ddc946",
-            maxWidth: "500px",
-          }}
-          role="status"
-          aria-live="polite"
-        >
+        <div style={{ ...cardStyle, border: "2px solid #ddc946", color: "#ddc946", maxWidth: "500px" }}>
           <h3>⏳ Processing</h3>
           <p>{message}</p>
         </div>
       )}
-
       {status === "error" && (
-        <div
-          style={{
-            ...cardStyle,
-            border: "2px solid red",
-            color: "red",
-            maxWidth: "500px",
-          }}
-          role="alert"
-          aria-live="assertive"
-        >
+        <div style={{ ...cardStyle, border: "2px solid red", color: "red", maxWidth: "500px" }}>
           <h3>❌ Error</h3>
           <p>{message}</p>
         </div>
       )}
 
       <div style={{ marginTop: "2rem" }}>
-        <button
-          onClick={() => (window.location.href = "https://www.gettaxreliefnow.com")}
-          style={{
-            padding: "0.75rem 1.5rem",
-            fontSize: "1rem",
-            cursor: "pointer",
-            borderRadius: "8px",
-            border: "none",
-            backgroundColor: "#ddc946",
-            color: "#0f2c76",
-            fontWeight: "bold",
-            transition: "all 0.3s ease",
-          }}
-          onMouseOver={(e) => {
-            e.target.style.backgroundColor = "#ffffff";
-            e.target.style.color = "#0f2c76";
-          }}
-          onMouseOut={(e) => {
-            e.target.style.backgroundColor = "#ddc946";
-            e.target.style.color = "#0f2c76";
-          }}
-        >
-          Return to Home
-        </button>
+        <button onClick={() => window.location.href = "https://www.gettaxreliefnow.com"} style={{
+          padding: "0.75rem 1.5rem",
+          fontSize: "1rem",
+          cursor: "pointer",
+          borderRadius: "8px",
+          border: "none",
+          backgroundColor: "#ddc946",
+          color: "#0f2c76",
+          fontWeight: "bold",
+          transition: "all 0.3s ease",
+        }}>Return to Home</button>
       </div>
     </div>
   );

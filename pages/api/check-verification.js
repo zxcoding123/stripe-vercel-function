@@ -9,12 +9,10 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: "Missing verification_session" });
     }
 
-    // 1. Retrieve the verification session from Stripe
     const session = await stripe.identity.verificationSessions.retrieve(
       verification_session
     );
 
-    // 2. Respond with details (status + metadata)
     res.status(200).json({
       id: session.id,
       status: session.status,
