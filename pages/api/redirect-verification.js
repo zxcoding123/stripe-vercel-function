@@ -1,5 +1,6 @@
 import Stripe from "stripe";
 import { Resend } from "resend";
+import { createSession } from '../../lib/session';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 const resend = new Resend(process.env.RESEND_API_KEY);
@@ -22,13 +23,24 @@ export default async function handler(req, res) {
         email: checkoutSession.customer_email || checkoutSession.customer_details?.email,
         product: product_name,
       },
-      // Stripe will automatically append ?verification_session=vs_xxx
-      return_url: `https://stripe-vercel-function.vercel.app/verification-complete?product=${encodeURIComponent(
-        product_name
-      )}`,
+      // We'll use a consistent return URL without query parameters
+      return_url: `https://stripe-vercel-function.vercel.app/verification-complete`,
     });
 
-    // 3. Send confirmation email via Resend
+    // 3. Create a server-side session with the verification data
+    const sessionData = {
+      verificationSessionId: verificationSession.id,
+      product: product_name,
+      email: checkoutSession.customer_email || checkoutSession.customer_details?.email,
+      createdAt: Date.now()
+    };
+    
+    const sealedSession = await createSession(sessionData);
+    
+    // 4. Set the session as a cookie
+    res.setHeader('Set-Cookie', `verification_session=${sealedSession}; Path=/; HttpOnly; Secure; SameSite=Lax`);
+
+    // 5. Send confirmation email via Resend
     if (checkoutSession.customer_details?.email) {
       await resend.emails.send({
         from: "no-reply@gettaxreliefnow.com",
@@ -47,7 +59,7 @@ export default async function handler(req, res) {
       });
     }
 
-    // 4. Redirect immediately to Stripe Identity Verification
+    // 6. Redirect immediately to Stripe Identity Verification
     res.writeHead(302, { Location: verificationSession.url });
     res.end();
   } catch (err) {

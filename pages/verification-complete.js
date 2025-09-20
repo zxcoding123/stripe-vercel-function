@@ -13,33 +13,33 @@ export default function VerificationComplete() {
 
   useEffect(() => {
     const checkVerificationStatus = async () => {
-      const { verification_session, product } = router.query;
-
-      if (!verification_session) {
-        setStatus("error");
-        setMessage("No verification session found in the URL.");
-        return;
-      }
-
       const controller = new AbortController();
       fetchControllerRef.current = controller;
 
       try {
-        const response = await fetch(
-          `/api/check-verification?verification_session=${encodeURIComponent(
-            verification_session
-          )}`,
-          { signal: controller.signal }
-        );
+        const response = await fetch('/api/check-verification', {
+          credentials: 'include', // Important: include cookies
+          signal: controller.signal
+        });
+        
+        if (response.status === 400) {
+          const errorData = await response.json();
+          setStatus("error");
+          setMessage(errorData.error || "Session expired or not found. Please start over.");
+          return;
+        }
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
         const data = await response.json();
 
         if (data.status === "verified") {
           setStatus("success");
           setMessage("Your identity has been successfully verified!");
 
-          const redirectUrl = `/form-instructions?product=${encodeURIComponent(
-            product || data.product || ""
-          )}`;
+          const redirectUrl = `/form-instructions?product=${encodeURIComponent(data.product || "")}`;
 
           setCountdown(5);
           redirectTimerRef.current = setInterval(() => {
@@ -76,15 +76,13 @@ export default function VerificationComplete() {
       }
     };
 
-    if (router.isReady) {
-      checkVerificationStatus();
-    }
+    checkVerificationStatus();
 
     return () => {
       if (fetchControllerRef.current) fetchControllerRef.current.abort();
       if (redirectTimerRef.current) clearInterval(redirectTimerRef.current);
     };
-  }, [router.isReady, router.query]);
+  }, []);
 
   const cardStyle = {
     padding: "1.5rem",
@@ -92,6 +90,12 @@ export default function VerificationComplete() {
     marginTop: "1rem",
     background: "#ffffff",
     boxShadow: "0 4px 10px rgba(0,0,0,0.1)",
+  };
+
+  const handleRestart = () => {
+    // Clear the session cookie by setting an expired cookie
+    document.cookie = "verification_session=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+    window.location.href = "/verification-start";
   };
 
   return (
@@ -130,6 +134,17 @@ export default function VerificationComplete() {
         <div style={{ ...cardStyle, border: "2px solid red", color: "red", maxWidth: "500px" }}>
           <h3>❌ Error</h3>
           <p>{message}</p>
+          <button onClick={handleRestart} style={{
+            marginTop: "1rem",
+            padding: "0.5rem 1rem",
+            backgroundColor: "#0f2c76",
+            color: "white",
+            border: "none",
+            borderRadius: "4px",
+            cursor: "pointer"
+          }}>
+            Restart Verification
+          </button>
         </div>
       )}
 
