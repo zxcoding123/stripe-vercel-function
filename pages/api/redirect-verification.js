@@ -1,11 +1,6 @@
 import Stripe from "stripe";
 import { Resend } from "resend";
 
-// if (process.env.NODE_ENV !== "production") {
-//   const dotenv = await import("dotenv");
-//   dotenv.config();
-// }
-
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -18,16 +13,27 @@ export default async function handler(req, res) {
     // 1. Retrieve the checkout session
     const checkoutSession = await stripe.checkout.sessions.retrieve(session_id);
 
-    // 2. Create the identity verification session
-    const verificationSession = await stripe.identity.verificationSessions.create({
+    // 2a. Create verification session without return_url
+    let verificationSession = await stripe.identity.verificationSessions.create({
       type: "document",
       customer: checkoutSession.customer || undefined,
       metadata: {
-        email: checkoutSession.customer_email || checkoutSession.customer_details?.email,
+        email:
+          checkoutSession.customer_email ||
+          checkoutSession.customer_details?.email,
         product: product_name,
       },
-      return_url: `https://stripe-vercel-function.vercel.app/verification-complete?verification_session={VERIFICATION_SESSION_ID}&product=${encodeURIComponent(product_name)}`,
     });
+
+    // 2b. Update verification session with return_url (now we have the ID)
+    verificationSession = await stripe.identity.verificationSessions.update(
+      verificationSession.id,
+      {
+        return_url: `https://stripe-vercel-function.vercel.app/verification-complete?verification_session=${encodeURIComponent(
+          verificationSession.id
+        )}&product=${encodeURIComponent(product_name)}`,
+      }
+    );
 
     // 3. Send confirmation email via Resend
     if (checkoutSession.customer_details?.email) {
